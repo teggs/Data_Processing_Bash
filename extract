@@ -1,0 +1,8 @@
+opt=$(grep 99352 routeinfo | cut -d "," -f3 | uniq | sort -t, -k1.1 -k1.2 -k1.4 -k1.5 -n | head -1)
+t=$(grep -n [,]$opt[,] routeinfo | head -1 | cut -d ":" -f1)
+grep -n Route routeinfo>rowinfo
+h=$(awk -v a=$t -F ":" '{if($1<a)print$1}' rowinfo | tail -1)
+h2=$(expr $h + 1)
+rm rowinfo
+sed -n ${h2},${t}p routeinfo>newinfo
+mv newinfo routeinfo

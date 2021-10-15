@@ -1,0 +1,63 @@
+#This is the main function of the Q3, which combines two key bash files——transfer and nonstop.
+#You may check more infomation in the description of the bash file named transfer.
+#parameters $1,$2: The location of your start
+
+if test -s routeinfo
+then
+	rm routeinfo
+fi
+
+echo "Finding routes..."
+ 
+./stngrep $1 $2
+if ! test -s stn_results
+then 
+	echo "There is no railway/subway station nearby!"
+	echo "There is no railway/subway station nearby!">routeinfo
+	./ghtml
+	exit
+fi
+
+today=$(echo $(date "+%u") | cut -d " " -f1)
+time=$(echo $(date) | cut -d " " -f4)
+
+touch routeinfo
+./nonstop $time $today
+
+if test -s routeinfo
+then
+	num=$(grep late routeinfo | wc -l)
+	if [ $num -gt 0 ]
+	then
+		echo "It's too late for you to start!"
+		echo "It's too late for you to start!">routeinfo
+		./ghtml
+		exit
+	else
+		echo "Find a nonstop route! Check more infomation in the route.html file!"
+		./ghtml
+		exit
+	fi
+fi
+
+./transfer $time $today
+if test -s routeinfo
+then	
+	num=$(grep 99352 routeinfo | wc -l)
+	if [ $num -gt 0 ]
+	then	
+		./extract
+		echo "Find a transfer route! Check more infomation in the route.html file!"
+	else
+		echo "There is no available route!"
+		echo "There is no available route!">routeinfo
+	fi
+else
+	echo "There is no available route!"
+	echo "There is no available route!">routeinfo
+fi
+./ghtml
+rm routeinfo
+rm info
+rm stn_results
+rm results

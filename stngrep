@@ -1,0 +1,27 @@
+if test -s stn_results
+then
+	rm stn_results
+fi
+
+length=$(cat stn | wc -l)
+for i in $(seq 1 $length)
+do
+	line=$(sed -n "$i p" stn)
+	lap=$(echo $line | cut -d "," -f3)
+	lon=$(echo $line | cut -d "," -f4)
+	dis=$(./haversine.awk $1 $2 $lap $lon)
+	if [ $dis -lt 1000 ]
+	then
+		time=$(expr $(expr $dis / 60 ) + 1 )
+		name=$(echo $line | cut -d "," -f1)
+		echo $name,$time>>stn_bt
+	fi
+done
+
+if test -s stn_bt
+then
+	cat stn_bt | sort -t, -k1 -n>stn_results
+	rm stn_bt
+else
+	touch stn_results
+fi

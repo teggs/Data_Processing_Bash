@@ -1,0 +1,66 @@
+#introduction: This file uses stn_results which is produced by bash file
+#	       stngrep as input, and produces a file named routeinfo which
+#	       stores all the possible routes.
+#	       use command "cat routeinfo" to check the results after 
+#	       executing this file. 
+#parameter: $1 The time you start. The right form should be 12:00:00.
+#           $2 The day you go out. You can only input an integer from 1 to 7,
+#              which stands for Monday to Sunday.
+
+length=$(cat stn_results | wc -l)
+for i in $(seq 1 $length)
+do
+	line=$(sed -n "$i p" stn_results)
+	stn=$(echo $line | cut -d "," -f1)
+	time=$(echo $line | cut -d "," -f2)
+	./linegrep $stn $2 2
+	./findline $1 $time
+
+	if ! test -s info
+	then
+		echo "You can not reach the rail/subway station from $stn station">>routeinfo
+		echo "">>routeinfo
+		continue
+	fi
+	echo "Route $i">>routeinfo
+	echo "Start at $1">>routeinfo
+	echo "Choose $stn station as start and spend $time minute(s) to walk there">>routeinfo
+
+	stime=$(cat info | cut -d "," -f2)
+	tripline=$(cat info | cut -d "," -f1)
+	echo "Take the $tripline tripline at $stime">>routeinfo
+	arvtime=$(cat info | cut -d "," -f3)
+	trans=$(cat info | cut -d "," -f4)
+	echo "Arrive the $trans transfer station at $arvtime">>routeinfo
+	echo "transfer infomation:">>routeinfo
+	cat info>>routeinfo
+
+	if [ $trans -eq 99007 ]
+	then 
+		transtime=0
+	elif [ $trans -eq 99601 ] || [ $trans -eq 99602 ]
+	then 
+		transtime=4 #The time for an adult walking from 99601 to 99007 is about 4 minutes.
+		echo "Spend 4 minutes to walk to the railway station">>routeinfo
+	else
+		transtime=1 #The time for an adult interal transfer is about 1 minute.
+		echo "Spend 1 minutes for interal transfer">>routeinfo
+	fi
+
+	./linegrep 99007 $2 1
+	./findline $arvtime $transtime
+
+	if test -s info
+	then
+		stime=$(cat info | cut -d "," -f2)
+		tripline=$(cat info | cut -d "," -f1)
+		echo "Take the $tripline tripline at $stime time in the railway station">>routeinfo
+		arvtime=$(cat info | cut -d "," -f3)
+		echo "Arrive at fremantle station at $arvtime">>routeinfo
+		echo "line information:">>routeinfo
+		cat info>>routeinfo
+	else
+		echo "It's too late for you to arrive at fremantle station">>routeinfo
+	fi
+	echo "">>routeinfo
+done

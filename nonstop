@@ -1,0 +1,79 @@
+#This bash file detects all the routes that you can go to fremantle station directly.
+#The input, output and usage of this file are all the same as the transfer file.
+#You may check more information in the description of the bash file named transfer.
+
+grep 99352 stn_results>temp
+if test -s temp
+then	
+	time=$(cat temp | cut -d "," -f2)
+	hour=$(echo $1 | cut -d ":" -f1)
+	min=$(echo $1 | cut -d ":" -f2)
+	check=$(( $(( 60 * $hour )) + $(( $min + $time )) ))
+	if [ $check -gt 924 ]
+	then	
+		echo "It's too late for you to arrive at fremantle station">>routeinfo
+		rm temp
+		exit
+	else
+		echo "Start at $1">>routeinfo 
+		echo "Walk to fremantle station directly, it will take you $time minute(s)">>routeinfo
+		echo "line infomation:">>routeinfo
+		rm temp  
+		exit
+	fi
+fi
+
+join -t, -11 -21 stn_results fremantle | tail -1>temp
+if test -s temp
+then
+	stn=$(awk -F "," '{print$1}' temp) 
+	time=$(awk -F "," '{print$2}' temp)
+	./linegrep $stn $2 1
+	./findline $1 $time
+	if test -s info
+	then
+		echo "Start at $1">>routeinfo
+		echo "Choose $stn station as start and spend $time minute(s) to walk there">>routeinfo
+  
+		tripline=$(awk -F "," '{print$1}' info)
+		stime=$(awk -F "," '{print$2}' info)
+		arvtime=$(awk -F "," '{print$3}' info)
+		echo "Take $tripline tripline at $stime">>routeinfo
+		echo "Arrive at fremantle station at $arvtime">>routeinfo
+		echo "line infomation:">>routeinfo 
+ 		cat info>>routeinfo
+	else
+		echo "It's too late for you to arrive at fremantle station">>routeinfo
+	fi
+	rm temp
+	exit
+fi
+
+grep 99601 stn_results>temp
+if test -s temp
+then	
+	stn=$(awk -F "," '{print$1}' temp)
+	time=$(awk -F "," '{print$2}' temp)
+	./linegrep 99007 $2 1
+	./findline $1 $(expr $time + 4 )
+	if test -s info
+	then
+		echo "Start at $1">>routeinfo
+		echo "Choose 99601 station as start and spend $time minute(s) to walk there">>routeinfo
+		echo "Spend 4 minutes to walk to 99007 station from 99601 station">>routeinfo
+
+		tripline=$(awk -F "," '{print$1}' info)
+		stime=$(awk -F "," '{print$2}' info)
+		arvtime=$(awk -F "," '{print$3}' info)
+		echo "Take $tripline tripline at $stime">>routeinfo
+		echo "Arrive at fremantle station at $arvtime">>routeinfo
+		echo "line infomation:">>routeinfo
+		cat info>>routeinfo
+	else 
+		echo "It's too late for you to arrive at fremantle station">>routeinfo
+	fi
+	rm temp
+	exit
+fi
+
+rm temp

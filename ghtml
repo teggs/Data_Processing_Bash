@@ -1,0 +1,27 @@
+output(){
+cat<<THE_END
+<html>
+<head>
+    <title>
+The title of your page
+     </title>
+     </head>
+
+<body>
+<font size="+1">
+THE_END
+
+while read line
+do
+	echo "$line""<br>"
+done<routeinfo
+
+cat<<THE_END
+</font>
+</center>
+<script>cat text</script>
+</body>
+</html>
+THE_END
+}
+output>route.html
